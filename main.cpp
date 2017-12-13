@@ -3,6 +3,13 @@
 #include <fstream>
 #include <string>
 
+void drawImage(std::string  name, cv::Mat  source)
+{
+  cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
+  cv::imshow(name, source);
+  cv::waitKey();
+}
+
 int main(int argc, char * argv[])
 {
   std::string imgPath = argv[1];
@@ -10,10 +17,10 @@ int main(int argc, char * argv[])
   std::cout << "Hello World!" << std::endl;
 
 //  std::string imgPath = "/home/mandarin/Documents/Detection/53_x20_10 1 4 пассаж.jpeg";
+//    std::string imgPath = "/home/mandarin/Documents/Detection/1.jpg";
   cv::Mat srcMat = cv::imread(imgPath);
 
-  cv::imshow("image", srcMat);
-  cv::waitKey();
+  drawImage("image", srcMat);
 
   cv::Mat grayMat;
   cv::cvtColor(srcMat, grayMat, CV_BGR2GRAY);
@@ -22,8 +29,14 @@ int main(int argc, char * argv[])
 
   cv::Mat binMat;
   cv::adaptiveThreshold(grayMat, binMat, 200, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 301, -2);
-//  cv::imshow("bin", binMat);
-//  cv::waitKey();
+  drawImage("bin", binMat);
+
+
+  cv::dilate(binMat, binMat, cv::getStructuringElement(CV_SHAPE_ELLIPSE, cv::Size(15, 15)));
+  cv::erode(binMat, binMat, cv::getStructuringElement(CV_SHAPE_ELLIPSE, cv::Size(15, 15)));
+
+  drawImage("bin2", binMat);
+
 
 //  cv::Mat gaussMat1;
 //  cv::GaussianBlur(binMat, gaussMat1, cv::Size(21, 21), 0, 0);
@@ -37,13 +50,11 @@ int main(int argc, char * argv[])
 
   cv::Mat gaussMat1;
   cv::GaussianBlur(binMat, gaussMat1, cv::Size(1, 1), 0, 0);
-//  cv::imshow("gauss1", gaussMat1);
-//  cv::waitKey();
+//  drawImage("gauss1", gaussMat1);
 
   cv::Mat gaussMat2;
   cv::GaussianBlur(binMat, gaussMat2, cv::Size(99, 99), 0, 0);
-//  cv::imshow("gauss2", gaussMat2);
-//  cv::waitKey();
+//  drawImage("gauss2", gaussMat2);
 
 
   cv::Mat gaussBinMat1;
@@ -53,29 +64,41 @@ int main(int argc, char * argv[])
   cv::adaptiveThreshold(gaussMat2, gaussBinMat2, 200, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 15, -4);
 
   cv::Mat gaussBinMat = gaussBinMat1-gaussBinMat2;
-  cv::imshow("gaussBin", gaussBinMat);
-  cv::waitKey();
+//  drawImage("gaussBin", gaussBinMat);
 
 
   //-------------------------  MedianBlur Filter ----------------------
 
   cv::Mat medianMat;
   cv::medianBlur(gaussBinMat, medianMat, 9);
-  cv::imshow("MedianBlur", medianMat);
-  cv::waitKey();
+//  drawImage("MedianBlur", medianMat);
 
   //------------------------- EndMedianBlur ---------------------------
 
 
   std::vector<std::vector<cv::Point> > contours;
-  cv::findContours(medianMat, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE );
+  cv::Mat hierarchy;
+  cv::findContours(medianMat, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
   cv::Mat contourImage(medianMat.size(), CV_8UC3, cv::Scalar(0,0,0));
   for (size_t i = 0; i < contours.size(); i++) {
     cv::drawContours(contourImage, contours, i, cv::Scalar(255, 255, 255));
   }
 
-  cv::imshow("contours", contourImage);
-  cv::waitKey();
+//  drawImage("contours", contourImage);
+
+
+//--------------------
+
+//  cv::Mat srcMat2(medianMat.size(), CV_8UC3, cv::Scalar(0,0,0));
+
+  for (size_t i = 0; i < contours.size(); i++) {
+
+    cv::drawContours(srcMat, contours, i, cv::Scalar(255, 255, 255), 2, cv::LINE_8, hierarchy, 2);
+  }
+
+  drawImage("srcMat2", srcMat);
+
+//-----------------------
 
 //--------convexHull------------------
 
@@ -88,8 +111,7 @@ int main(int argc, char * argv[])
   for (size_t i = 0; i < contours.size(); ++i){
       cv::drawContours(hullImage, hull, i, cv::Scalar(255, 255, 255));
     }
-  cv::imshow("hullImage", hullImage);
-  cv::waitKey();
+//  drawImage("hullImage", hullImage);
 
 //-------END convexHull----------------
 
