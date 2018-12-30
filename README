@@ -2,4 +2,3 @@ Cell Detection using OpenCV library for C++11.
 
 Build project using QMake and cvDetection.pro file.
 
-Project is under developing.
